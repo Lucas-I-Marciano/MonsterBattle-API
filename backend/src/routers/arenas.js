@@ -1,16 +1,36 @@
 import { Router } from "express";
+import { PrismaClient } from '@prisma/client'
 
 const router = Router();
+const prisma = new PrismaClient()
 
 router
-    .post("/", (req, res) => {
-        res.status(201).json({
-            "message": "created",
-            "data": {
-                "name": "Volcano Pit",
-                "max_players": 2
+    .post("/", async (req, res) => {
+        const {name, max_players} = req.body
+
+        const createObject = {name, max_players}
+        const haveNullValue = Object.entries(createObject).filter((info)=>{return Boolean(!info[1])})
+        
+        if (haveNullValue.length > 0) {
+            return res.status(400).json({"message":"fail", "detail":"All fields are required - name, max_players"})
+        }
+
+        try {
+            const arena = await prisma.arena.findUnique({
+                where: {
+                    name
+                }
+            })
+            if (arena) {
+                return res.status(400).json({"message":"fail", "detail":"Arena already created"})
             }
-        })
+            const result = await prisma.arena.create({
+                data: createObject
+            })
+            res.status(201).json({ "message": "created", "data": result })
+        } catch (error) {
+            res.status(500).json({"message":"fail", "detail":"Internal Server Error"})
+        }
     })
     .post('/:id/join', (req, res) => {
 
