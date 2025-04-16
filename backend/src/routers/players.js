@@ -28,11 +28,26 @@ router
     })
     .delete('/:id', async (req, res) => {
         const { id } = req.params
-        await prisma.player.delete({
-            where: {
-                "id" : parseInt(id)
+        try {
+            const user = await prisma.player.findUnique({
+                where: {
+                    "id" : parseInt(id)
+                }
+            })
+            if (!user) {
+                return res.status(404).json({"message":"fail", "detail":"User not founded"})
             }
-        })
+
+            await prisma.player.delete({
+                where: {
+                    "id" : parseInt(id)
+                }
+            })
+            
+        } catch (error) {
+            res.status(500).json({"message":"fail", "detail":"Internal Server Error"})
+        }
+        
 
         res.status(204).json()
     })
