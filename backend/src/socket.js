@@ -1,8 +1,8 @@
 import express from "express"
 import { createServer } from "http"
-import { dirname, resolve } from "path"
 import { Server } from "socket.io"
-import { fileURLToPath } from "url"
+
+import routers from "./routers/index.js"
 
 
 const app = express()
@@ -23,6 +23,9 @@ io.on("connection", (socket) => {
     })
 
 })
+
+app.use(express.json())
+routers(app)
 
 server.listen(port, () => {
     console.log(`Server listening on port: ${port}`);
