@@ -1,12 +1,8 @@
 {
   "dependencies": {
-    "@sequelize/core": "^7.0.0-alpha.42",
     "express": "^5.1.0",
-    "pg": "^8.14.1",
-    "pg-hstore": "^2.3.4",
     "sequelize": "^6.37.7",
     "socket.io": "^4.8.1",
-    "sqlite3": "^5.1.7"
   },
   "type": "module",
   "name": "backend",
@@ -19,8 +15,5 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "description": "",
-  "devDependencies": {
-    "sequelize-cli": "^6.6.2"
-  }
+  "description": ""
 }
