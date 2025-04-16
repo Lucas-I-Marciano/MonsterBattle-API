@@ -1,10 +1,18 @@
 import { Router } from "express";
+import { PrismaClient } from '@prisma/client'
 
 const router = Router();
+const prisma = new PrismaClient()
 
 router
-    .post("/", (req, res) => {
-        res.status(201).json({ "message": "created", "data": "data" })
+    .post("/", async (req, res) => {
+        const {name} = req.body
+        const result = await prisma.player.create({
+            data: {
+                name
+            }
+        })
+        res.status(201).json({ "message": "created", "data": result })
     })
     .delete('/:id', (req, res) => {
         const { id } = req.params
