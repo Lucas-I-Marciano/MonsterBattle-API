@@ -7,12 +7,24 @@ const prisma = new PrismaClient()
 router
     .post("/", async (req, res) => {
         const {name} = req.body
-        const result = await prisma.player.create({
-            data: {
-                name
+        try {
+            const user = await prisma.player.findUnique({
+                where: {
+                    name
+                }
+            })
+            if (user) {
+                return res.status(400).json({"message":"fail", "detail":"Name already in use"})
             }
-        })
-        res.status(201).json({ "message": "created", "data": result })
+            const result = await prisma.player.create({
+                data: {
+                    name
+                }
+            })
+            res.status(201).json({ "message": "created", "data": result })
+        } catch (error) {
+            res.status(500).json({"message":"fail", "detail":"Internal Server Error"})
+        }
     })
     .delete('/:id', async (req, res) => {
         const { id } = req.params
