@@ -21,3 +21,9 @@ model Monster {
   speed Int
   special String
 }
+
+model Arena {
+  id Int @id @default(autoincrement())
+  name String @unique
+  max_players Int
+}
