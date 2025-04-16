@@ -14,9 +14,13 @@ router
         })
         res.status(201).json({ "message": "created", "data": result })
     })
-    .delete('/:id', (req, res) => {
+    .delete('/:id', async (req, res) => {
         const { id } = req.params
-        console.log(id);
+        await prisma.player.delete({
+            where: {
+                "id" : parseInt(id)
+            }
+        })
 
         res.status(204).json()
     })
