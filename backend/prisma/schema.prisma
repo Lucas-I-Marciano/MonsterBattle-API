@@ -11,3 +11,13 @@ model Player {
     id    Int     @id @default(autoincrement())
     name String  @unique
 }
+
+model Monster {
+  id Int @id @default(autoincrement())
+  name String @unique
+  hp Int
+  attack Int
+  defense Int
+  speed Int
+  special String
+}
