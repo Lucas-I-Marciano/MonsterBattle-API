@@ -35,26 +35,14 @@ router
             res.status(500).json({"message":"fail", "detail":"Internal Server Error"})
         }
     })
-    .get('/', (req, res) => {
+    .get('/', async (req, res) => {
 
-        res.status(200).json([
-            {
-                "name": "Flametail",
-                "hp": 100,
-                "attack": 20,
-                "defense": 10,
-                "speed": 15,
-                "special": "fireblast"
-            },
-            {
-                "name": "Flametail",
-                "hp": 100,
-                "attack": 20,
-                "defense": 10,
-                "speed": 15,
-                "special": "fireblast"
-            }
-        ])
+        try {
+            const monsters = await prisma.monster.findMany()
+            res.status(200).json(monsters)
+        } catch (error) {
+            res.status(500).json({"message":"fail", "detail":"Internal Server Error"})
+        }
     })
 
 export default router
