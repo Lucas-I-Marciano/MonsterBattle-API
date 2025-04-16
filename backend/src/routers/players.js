@@ -21,6 +21,8 @@ router
                     name
                 }
             })
+            res.header('userId', result["id"]);
+            
             res.status(201).json({ "message": "created", "data": result })
         } catch (error) {
             res.status(500).json({"message":"fail", "detail":"Internal Server Error"})
