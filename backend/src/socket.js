@@ -17,11 +17,27 @@ export const io = new Server(server, {
 
 const port = 3000;
 
+let roomInfo = {};
+
 io.on("connection", (socket) => {
   console.log("User connected");
 
   socket.on("testEvent", () => {
     console.log("testEvent");
+  });
+
+  socket.on("userJoinRoom", (data) => {
+    console.log("userJoinRoom");
+
+    roomInfo = { ...roomInfo, ...data };
+
+    socket.emit("roomInfo", roomInfo);
+  });
+
+  socket.on("disconnect", () => {
+    console.log("Desconetar o socket ", socket.id);
+    delete roomInfo[socket.id];
+    socket.emit("userDisconnected", socket.id);
   });
 });
 
