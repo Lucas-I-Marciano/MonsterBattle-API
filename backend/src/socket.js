@@ -1,34 +1,34 @@
-import express from "express"
-import { createServer } from "http"
-import { Server } from "socket.io"
+import express from "express";
+import { createServer } from "http";
+import { Server } from "socket.io";
+import { createRequire } from "module";
+const require = createRequire(import.meta.url);
+const cors = require("cors");
 
-import routers from "./routers/index.js"
+import routers from "./routers/index.js";
 
-
-const app = express()
-const server = createServer(app)
+const app = express();
+const server = createServer(app);
 export const io = new Server(server, {
-    cors: {
-        origin: ["http://localhost:5173"]
-    }
-})
+  cors: {
+    origin: ["http://localhost:5173"],
+  },
+});
 
-const port = 3000
+const port = 3000;
 
 io.on("connection", (socket) => {
-    console.log("User connected");
+  console.log("User connected");
 
-    socket.on("testEvent", () => {
-        console.log("testEvent");
-    })
+  socket.on("testEvent", () => {
+    console.log("testEvent");
+  });
+});
 
-})
-
-app.use(express.json())
-routers(app)
+app.use(cors());
+app.use(express.json());
+routers(app);
 
 server.listen(port, () => {
-    console.log(`Server listening on port: ${port}`);
-
-})
-
+  console.log(`Server listening on port: ${port}`);
+});
