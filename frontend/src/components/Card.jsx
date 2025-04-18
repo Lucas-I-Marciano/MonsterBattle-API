@@ -37,7 +37,6 @@ export const Card = ({ img, name, hp, attack, defense, speed, actions }) => {
 
   useEffect(() => {
     socket.on("turnFinished", () => {
-      alert("Turn finished!")
       setCardClass(`${initialClassCard}`)
       dispatch({ type: "back" });
 
