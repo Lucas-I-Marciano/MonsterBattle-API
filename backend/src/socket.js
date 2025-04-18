@@ -2,8 +2,11 @@ import express from "express";
 import { createServer } from "http";
 import { Server } from "socket.io";
 import { createRequire } from "module";
+import { PrismaClient } from "@prisma/client";
+
 const require = createRequire(import.meta.url);
 const cors = require("cors");
+const prisma = new PrismaClient();
 
 import routers from "./routers/index.js";
 
@@ -23,18 +26,25 @@ io.on("connection", (socket) => {
   console.log("User connected");
 
   socket.on("userJoinRoom", (data) => {
-    console.log("userJoinRoom");
-
     roomInfo = { ...roomInfo, ...data };
+  });
 
+  socket.on("userOnRoom", () => {
     io.emit("roomInfo", roomInfo);
   });
 
-  socket.on("disconnect", () => {
-    console.log("Desconetar o socket ", socket.id);
+  socket.on("disconnect", async () => {
+    try {
+      await prisma.player.deleteMany({
+        where: {
+          socket: socket.id.toString(),
+        },
+      });
+    } catch (error) {
+      console.log("Error");
+    }
     delete roomInfo[socket.id];
     io.emit("roomInfo", roomInfo);
-    io.emit("userDisconnected", socket.id);
   });
 });
 
