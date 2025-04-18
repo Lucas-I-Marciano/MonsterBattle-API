@@ -79,9 +79,8 @@ export const Home = () => {
 
         <button
           disabled={buttonState.disabled}
-          className={`w-30 border rounded-md mt-10 ${
-            buttonState.disabled ? "bg-gray-300 text-white" : "bg-gray-100"
-          }`}
+          className={`w-30 border rounded-md mt-10 ${buttonState.disabled ? "bg-gray-300 text-white" : "bg-gray-100"
+            }`}
           type="submit"
         >
           {buttonState.text}
