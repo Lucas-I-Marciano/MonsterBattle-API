@@ -1,52 +1,41 @@
 import { useEffect, useState } from "react";
 import { socket } from "../socket";
 
-import { joinArena } from "../services/arena";
-import { randomMonster } from "../services/monster";
+import loading from "../assets/gifs/loading.gif";
+
 import { CardOne } from "../components/CardOne";
 import { CardTwo } from "../components/CardTwo";
 
 export const Battle = () => {
   const [isTwoPlayers, setIsTwoPlayers] = useState(false);
-  const [monsterOne, setMonsterOne] = useState({
-    name: "",
-    hp: "",
-    attack: "",
-    defense: "",
-    speed: "",
-  });
-  const [monsterTwo, setMonsterTwo] = useState({
-    name: "",
-    hp: "",
-    attack: "",
-    defense: "",
-    speed: "",
-  });
+  const [monsterOne, setMonsterOne] = useState({});
+  const [monsterTwo, setMonsterTwo] = useState({});
 
   useEffect(() => {
-    const result = async () => {
-      const response = await joinArena(5, 3);
-      const monster = await randomMonster(response["monster_id"]);
-      setMonsterOne(monster);
-      const socketId = socket.id.toString();
-      socket.emit("userJoinRoom", { [socketId]: { monster } });
-
-      const response_ = await joinArena(5, 3);
-      const monster_ = await randomMonster(response_["monster_id"]);
-      setMonsterTwo(monster_);
-    };
-
     socket.on("roomInfo", (data) => {
       if (Object.keys(data).length === 2) {
         setIsTwoPlayers(true);
+        console.log(Object.entries(data));
+        const arrayMonsterOne = Object.entries(data).filter(
+          ([socketEntry, _]) => {
+            return socketEntry === socket.id;
+          }
+        );
+        const arrayMonsterTwo = Object.entries(data).filter(
+          ([socketEntry, _]) => {
+            return socketEntry !== socket.id;
+          }
+        );
+        console.log(arrayMonsterOne[0][1]["monster"]);
+
+        setMonsterOne(arrayMonsterOne[0][1]["monster"]);
+        setMonsterTwo(arrayMonsterTwo[0][1]["monster"]);
       }
     });
 
     socket.on("userDisconnected", (data) => {
       console.log("userDisconnected");
     });
-
-    result();
   }, []);
   return (
     <>
@@ -68,7 +57,10 @@ export const Battle = () => {
           />
         </div>
       ) : (
-        <div className="font-bold text-2xl">Waiting another player...</div>
+        <div className="py-20 font-bold text-2xl w-full flex flex-col justify-center items-center">
+          Waiting another player...
+          <img className="w-20 py-20" src={loading} alt="loading..." />
+        </div>
       )}
     </>
   );
