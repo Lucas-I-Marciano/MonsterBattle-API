@@ -27,13 +27,14 @@ io.on("connection", (socket) => {
 
     roomInfo = { ...roomInfo, ...data };
 
-    socket.emit("roomInfo", roomInfo);
+    io.emit("roomInfo", roomInfo);
   });
 
   socket.on("disconnect", () => {
     console.log("Desconetar o socket ", socket.id);
     delete roomInfo[socket.id];
-    socket.emit("userDisconnected", socket.id);
+    io.emit("roomInfo", roomInfo);
+    io.emit("userDisconnected", socket.id);
   });
 });
 
