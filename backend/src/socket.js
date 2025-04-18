@@ -65,8 +65,8 @@ io.on("connection", (socket) => {
       if (thisSocketAction === "attack") {
         switch (otherSocketAction) {
           case "attack":
-            const thisHp = data.hp - otherSocketObject.attack - data.defense + 100
-            const otherHp = otherSocketObject.hp - data.attack - otherSocketObject.defense
+            const thisHp = data.hp - (otherSocketObject.attack - data.defense > 0 ? otherSocketObject.attack - data.defense : 0)
+            const otherHp = otherSocketObject.hp - (data.attack - otherSocketObject.defense > 0 ? data.attack - otherSocketObject.defense : 0)
             turns[turn][data.socketId].hp = thisHp
             turns[turn][otherSocketId].hp = otherHp
 
@@ -83,7 +83,7 @@ io.on("connection", (socket) => {
       io.emit("turnFinished", turns)
     } else {
       turn += 1
-      turns[turn] = { [data.socketId]: { action: data.action, attack: data.attack, defense: data.defense, hp: data.hp } }
+      turns[turn] = { [data.socketId]: { action: data.action, name: data.name, attack: data.attack, defense: data.defense, hp: data.hp, speed: data.speed } }
     }
   })
 });
