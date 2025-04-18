@@ -13,7 +13,9 @@ export const Battle = () => {
 
   useEffect(() => {
     socket.emit("userOnRoom");
+
     socket.on("roomInfo", (data) => {
+
       if (Object.keys(data).length === 2) {
         setIsTwoPlayers(true);
         const arrayMonsterOne = Object.entries(data).filter(
@@ -33,6 +35,27 @@ export const Battle = () => {
         setIsTwoPlayers(false);
       }
     });
+
+    socket.on("turnFinished", (data) => {
+      const lastTurn = Math.max(...Object.keys(data))
+      const lastTurnInfo = data[lastTurn]
+
+      const novaInfo = lastTurnInfo[socket.id]
+      setMonsterOne({
+        id: 1, name: novaInfo.name, hp: novaInfo.hp, attack: novaInfo.attack, defense: novaInfo.defense, special: "Roar!", speed: novaInfo.speed
+      })
+
+
+      const outroSocket = Object.keys(lastTurnInfo).filter((eachSocketId) => { return eachSocketId !== socket.id })[0]
+      const outraNovaInfo = lastTurnInfo[outroSocket]
+      setMonsterTwo({
+        id: 1, name: outraNovaInfo.name, hp: outraNovaInfo.hp, attack: outraNovaInfo.attack, defense: outraNovaInfo.defense, special: "Roar!", speed: outraNovaInfo.speed
+      })
+
+
+
+
+    })
   }, []);
 
   const actions = (modifiers) => {
