@@ -6,6 +6,6 @@ export const createPlayer = async (data) => {
 };
 
 export const deletePlayer = async (id) => {
-  const response = await client.post(`/players/${id}`);
+  const response = await client.delete(`/players/${id}`);
   return response.data;
 };
