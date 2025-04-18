@@ -9,6 +9,7 @@ const cors = require("cors");
 const prisma = new PrismaClient();
 
 import routers from "./routers/index.js";
+import { calculateDamage, calculateDefenseAbsorption } from "./utils/damage.js";
 
 const app = express();
 const server = createServer(app);
@@ -79,72 +80,51 @@ io.on("connection", (socket) => {
       const otherSocketObject = turns[turn][otherSocketId];
       const otherSocketAction = otherSocketObject.action;
 
+      let updatedThisHp = data.hp;
+      let updatedOtherHp = otherSocketObject.hp;
+
       if (thisSocketAction === "attack") {
         switch (otherSocketAction) {
           case "attack":
-            // thisHp_aa -> a of "A"ttacks
-            const thisHp_aa =
-              data.hp -
-              (otherSocketObject.attack - data.defense > 0
-                ? otherSocketObject.attack - data.defense
-                : 0);
-            const otherHp_aa =
-              otherSocketObject.hp -
-              (data.attack - otherSocketObject.defense > 0
-                ? data.attack - otherSocketObject.defense
-                : 0);
-            turns[turn][data.socketId].hp = thisHp_aa;
-            turns[turn][otherSocketId].hp = otherHp_aa;
-
+            updatedThisHp = calculateDamage(otherSocketObject, data);
+            updatedOtherHp = calculateDamage(data, otherSocketObject);
             break;
           case "defend":
-            const thisHp =
-              data.hp -
-              (otherSocketObject.defense * 1.5 - data.attack > 0
-                ? otherSocketObject.defense * 1.5 - data.attack
-                : 0);
-
-            const otherHp =
-              otherSocketObject.hp -
-              (data.attack - otherSocketObject.defense * 1.5 > 0
-                ? data.attack - otherSocketObject.defense * 1.5
-                : 0);
-            turns[turn][data.socketId].hp = thisHp;
-            turns[turn][otherSocketId].hp = otherHp;
-
+            updatedThisHp = calculateDefenseAbsorption(
+              otherSocketObject,
+              data,
+              1.5
+            );
+            updatedOtherHp = calculateDamage(data, {
+              ...otherSocketObject,
+              defense: otherSocketObject.defense * 1.5,
+            });
           default:
             break;
         }
       } else if (thisSocketAction === "defend") {
         switch (otherSocketAction) {
           case "attack":
-            // thisHp_aa -> a of "A"ttacks
-            const thisHp =
-              data.hp -
-              (otherSocketObject.attack - data.defense * 1.5 > 0
-                ? otherSocketObject.attack - data.defense * 1.5
-                : 0);
-            const otherHp =
-              otherSocketObject.hp -
-              (data.defense * 1.5 - otherSocketObject.attack > 0
-                ? data.defense * 1.5 - otherSocketObject.attack
-                : 0);
-            turns[turn][data.socketId].hp = thisHp;
-            turns[turn][otherSocketId].hp = otherHp;
-
+            updatedThisHp = calculateDamage(otherSocketObject, {
+              ...data,
+              defense: data.defense * 1.5,
+            });
+            updatedOtherHp = calculateDefenseAbsorption(
+              data,
+              otherSocketObject,
+              1.5
+            );
             break;
           case "defend":
-            // thisHp_dd -> d of "D"effends
-            const thisHp_dd = data.hp;
-
-            const otherHp_dd = otherSocketObject.hp;
-            turns[turn][data.socketId].hp = thisHp_dd;
-            turns[turn][otherSocketId].hp = otherHp_dd;
+            updatedThisHp = data.hp;
+            updatedOtherHp = otherSocketObject.hp;
 
           default:
             break;
         }
       }
+      turns[turn][data.socketId].hp = updatedThisHp;
+      turns[turn][otherSocketId].hp = updatedOtherHp;
 
       io.emit("turnFinished", turns);
     } else {
