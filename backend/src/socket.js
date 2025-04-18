@@ -22,10 +22,6 @@ let roomInfo = {};
 io.on("connection", (socket) => {
   console.log("User connected");
 
-  socket.on("testEvent", () => {
-    console.log("testEvent");
-  });
-
   socket.on("userJoinRoom", (data) => {
     console.log("userJoinRoom");
 
