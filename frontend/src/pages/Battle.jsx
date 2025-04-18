@@ -3,8 +3,10 @@ import { socket } from "../socket";
 
 import loading from "../assets/gifs/loading.gif";
 
-import { CardOne } from "../components/CardOne";
 import { CardTwo } from "../components/CardTwo";
+import { Card } from "../components/Card";
+import myMonster from "../assets/images/myMonster.jpg";
+import opponent from "../assets/images/opponent.jpg";
 
 export const Battle = () => {
   const [isTwoPlayers, setIsTwoPlayers] = useState(false);
@@ -15,7 +17,6 @@ export const Battle = () => {
     socket.emit("userOnRoom");
 
     socket.on("roomInfo", (data) => {
-
       if (Object.keys(data).length === 2) {
         setIsTwoPlayers(true);
         const arrayMonsterOne = Object.entries(data).filter(
@@ -37,45 +38,55 @@ export const Battle = () => {
     });
 
     socket.on("turnFinished", (data) => {
-      const lastTurn = Math.max(...Object.keys(data))
-      const lastTurnInfo = data[lastTurn]
+      const lastTurn = Math.max(...Object.keys(data));
+      const lastTurnInfo = data[lastTurn];
 
-      const novaInfo = lastTurnInfo[socket.id]
+      const novaInfo = lastTurnInfo[socket.id];
       setMonsterOne({
-        id: 1, name: novaInfo.name, hp: novaInfo.hp, attack: novaInfo.attack, defense: novaInfo.defense, special: "Roar!", speed: novaInfo.speed
-      })
+        id: 1,
+        name: novaInfo.name,
+        hp: novaInfo.hp,
+        attack: novaInfo.attack,
+        defense: novaInfo.defense,
+        special: "Roar!",
+        speed: novaInfo.speed,
+      });
 
-
-      const outroSocket = Object.keys(lastTurnInfo).filter((eachSocketId) => { return eachSocketId !== socket.id })[0]
-      const outraNovaInfo = lastTurnInfo[outroSocket]
+      const outroSocket = Object.keys(lastTurnInfo).filter((eachSocketId) => {
+        return eachSocketId !== socket.id;
+      })[0];
+      const outraNovaInfo = lastTurnInfo[outroSocket];
       setMonsterTwo({
-        id: 1, name: outraNovaInfo.name, hp: outraNovaInfo.hp, attack: outraNovaInfo.attack, defense: outraNovaInfo.defense, special: "Roar!", speed: outraNovaInfo.speed
-      })
-
-
-
-
-    })
+        id: 1,
+        name: outraNovaInfo.name,
+        hp: outraNovaInfo.hp,
+        attack: outraNovaInfo.attack,
+        defense: outraNovaInfo.defense,
+        special: "Roar!",
+        speed: outraNovaInfo.speed,
+      });
+    });
   }, []);
 
   const actions = (modifiers) => {
-    return { modifiers }
-  }
+    return { modifiers };
+  };
 
   return (
     <>
       {isTwoPlayers ? (
         <div className="flex">
-          <CardOne
+          <Card
+            img={myMonster}
             name={monsterOne.name}
             hp={monsterOne.hp}
             attack={monsterOne.attack}
             defense={monsterOne.defense}
             speed={monsterOne.speed}
             actions={actions}
-
           />
           <CardTwo
+            img={opponent}
             name={monsterTwo.name}
             hp={monsterTwo.hp}
             attack={monsterTwo.attack}
