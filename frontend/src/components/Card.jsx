@@ -1,6 +1,57 @@
-export const Card = ({ img, name, hp, attack, defense, speed }) => {
+import { useEffect, useReducer, useState } from "react";
+import { socket } from "../socket";
+
+const reducer = (state, action) => {
+  switch (action.type) {
+    case "loading":
+      return {
+        ...state,
+        bg: "bg-gray-300 text-white",
+        disabled: true,
+      };
+    case "back":
+      return {
+        ...state,
+        bg: "bg-gray-900",
+        disabled: false,
+      };
+    default:
+      return state;
+  }
+};
+
+export const Card = ({ img, name, hp, attack, defense, speed, actions }) => {
+  const handleAction = (action, socketId) => {
+    socket.emit("userAction", {
+      action,
+      socketId,
+      name,
+      hp,
+      attack,
+      defense,
+      speed,
+    });
+  };
+  const initialClassCard =
+    "max-w-2xl mx-4 sm:max-w-sm md:max-w-sm lg:max-w-sm xl:max-w-sm sm:mx-auto md:mx-auto lg:mx-auto xl:mx-auto mt-8 bg-white shadow-xl rounded-lg text-gray-900";
+  const [cardClass, setCardClass] = useState(initialClassCard);
+
+  const [buttonState, dispatch] = useReducer(reducer, {
+    bg: "bg-gray-900",
+    disabled: false,
+  });
+
+  useEffect(() => {
+    socket.on("turnFinished", () => {
+      setTimeout(() => {
+        setCardClass(`${initialClassCard}`);
+        dispatch({ type: "back" });
+      }, 1000);
+    });
+  }, []);
+
   return (
-    <div className="max-w-2xl mx-4 sm:max-w-sm md:max-w-sm lg:max-w-sm xl:max-w-sm sm:mx-auto md:mx-auto lg:mx-auto xl:mx-auto mt-8 bg-white shadow-xl rounded-lg text-gray-900">
+    <div className={cardClass}>
       <div className="rounded-t-lg h-32 overflow-hidden">
         <img
           className="object-cover object-top w-full"
@@ -38,18 +89,58 @@ export const Card = ({ img, name, hp, attack, defense, speed }) => {
       </ul>
       <div className="p-4 border-t mx-8 mt-2">
         <div className="flex gap-5 pb-5">
-          <button className="w-1/2 block mx-auto rounded-full bg-gray-900 hover:shadow-lg font-semibold text-white px-6 py-2">
+          <button
+            disabled={buttonState.disabled}
+            onClick={() => {
+              handleAction("attack", socket.id.toString());
+              setCardClass(
+                `${cardClass} ${
+                  actions("duration-1000 scale-90 rotate-45").modifiers
+                }`
+              );
+              dispatch({ type: "loading" });
+            }}
+            className={`w-1/2 block mx-auto rounded-full ${buttonState.bg} hover:shadow-lg font-semibold text-white px-6 py-2`}
+          >
             Attack
           </button>
-          <button className="w-1/2 block mx-auto rounded-full bg-gray-900 hover:shadow-lg font-semibold text-white px-6 py-2">
+          <button
+            disabled={buttonState.disabled}
+            onClick={() => {
+              handleAction("defend", socket.id.toString());
+              setCardClass(
+                `${cardClass} ${actions("duration-1000 rotate-270").modifiers}`
+              );
+              dispatch({ type: "loading" });
+            }}
+            className={`w-1/2 block mx-auto rounded-full ${buttonState.bg} hover:shadow-lg font-semibold text-white px-6 py-2`}
+          >
             Defend
           </button>
         </div>
         <div className="flex gap-5">
-          <button className="w-1/2 block mx-auto rounded-full bg-gray-900 hover:shadow-lg font-semibold text-white px-6 py-2">
+          <button
+            disabled={buttonState.disabled}
+            onClick={() => {
+              setCardClass(
+                `${cardClass} ${actions("duration-1000 scale-120 ").modifiers}`
+              );
+              dispatch({ type: "loading" });
+            }}
+            className={`w-1/2 block mx-auto rounded-full ${buttonState.bg} hover:shadow-lg font-semibold text-white px-6 py-2`}
+          >
             Special
           </button>
-          <button className="w-1/2 block mx-auto rounded-full bg-gray-900 hover:shadow-lg font-semibold text-white px-6 py-2">
+          <button
+            disabled={buttonState.disabled}
+            onClick={() => {
+              setCardClass(
+                `${cardClass} ${actions("duration-1000 scale-25 ").modifiers}`
+              );
+              dispatch({ type: "loading" });
+            }}
+            className={`w-1/2 block mx-auto rounded-full ${buttonState.bg} hover:shadow-lg font-semibold text-white px-6 py-2`}
+          >
             Forfeit
           </button>
         </div>
