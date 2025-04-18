@@ -1,58 +1,64 @@
 import { Router } from "express";
-import { PrismaClient } from '@prisma/client'
+import { PrismaClient } from "@prisma/client";
 
 const router = Router();
-const prisma = new PrismaClient()
+const prisma = new PrismaClient();
 
 router
-    .post("/", async (req, res) => {
-        const {name} = req.body
-        try {
-            const user = await prisma.player.findUnique({
-                where: {
-                    name
-                }
-            })
-            if (user) {
-                return res.status(400).json({"message":"fail", "detail":"Name already in use"})
-            }
-            const result = await prisma.player.create({
-                data: {
-                    name
-                }
-            })
-            res.header('userId', result["id"]);
-            
-            res.status(201).json({ "message": "created", "data": result })
-        } catch (error) {
-            res.status(500).json({"message":"fail", "detail":"Internal Server Error"})
-        }
-    })
-    .delete('/:id', async (req, res) => {
-        const { id } = req.params
-        try {
-            const user = await prisma.player.findUnique({
-                where: {
-                    "id" : parseInt(id)
-                }
-            })
-            if (!user) {
-                return res.status(404).json({"message":"fail", "detail":"User not founded"})
-            }
+  .post("/", async (req, res) => {
+    const { name, socket } = req.body;
+    try {
+      const user = await prisma.player.findUnique({
+        where: {
+          name,
+        },
+      });
+      if (user) {
+        return res
+          .status(400)
+          .json({ message: "fail", detail: "Name already in use" });
+      }
+      const result = await prisma.player.create({
+        data: {
+          name,
+          socket,
+        },
+      });
+      res.header("userId", result["id"]);
 
-            await prisma.player.delete({
-                where: {
-                    "id" : parseInt(id)
-                }
-            })
-            
-        } catch (error) {
-            res.status(500).json({"message":"fail", "detail":"Internal Server Error"})
-        }
-        
+      res.status(201).json({ message: "created", data: result });
+    } catch (error) {
+      res
+        .status(500)
+        .json({ message: "fail", detail: "Internal Server Error" });
+    }
+  })
+  .delete("/:id", async (req, res) => {
+    const { id } = req.params;
+    try {
+      const user = await prisma.player.findUnique({
+        where: {
+          id: parseInt(id),
+        },
+      });
+      if (!user) {
+        return res
+          .status(404)
+          .json({ message: "fail", detail: "User not founded" });
+      }
 
-        res.status(204).json()
-    })
+      await prisma.player.delete({
+        where: {
+          id: parseInt(id),
+        },
+      });
+    } catch (error) {
+      res
+        .status(500)
+        .json({ message: "fail", detail: "Internal Server Error" });
+    }
 
-export default router
+    res.status(204).json();
+  });
 
+export default router;
