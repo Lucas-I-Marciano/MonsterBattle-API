@@ -21,9 +21,12 @@ export const io = new Server(server, {
 const port = 3000;
 
 let roomInfo = {};
+const turns = {}
+let turn = 0
+const aux_turn = {}
 
 io.on("connection", (socket) => {
-  console.log("User connected");
+  console.log("User connected: ", socket.id);
 
   socket.on("userJoinRoom", (data) => {
     roomInfo = { ...roomInfo, ...data };
@@ -46,6 +49,43 @@ io.on("connection", (socket) => {
     delete roomInfo[socket.id];
     io.emit("roomInfo", roomInfo);
   });
+
+  socket.on("userAction", (data) => {
+    if (!turns[turn]) {
+      turns[turn] = { [data.socketId]: { action: data.action, name: data.name, attack: data.attack, defense: data.defense, hp: data.hp, speed: data.speed } }
+    } else if (!turns[turn][data.socketId]) {
+
+      turns[turn][data.socketId] = { action: data.action, name: data.name, attack: data.attack, defense: data.defense, hp: data.hp, speed: data.speed }
+
+      const thisSocketAction = data.action
+      const otherSocketId = Object.keys(turns[turn]).filter((id) => { return id !== data.socketId })
+      const otherSocketObject = turns[turn][otherSocketId]
+      const otherSocketAction = otherSocketObject.action
+
+      if (thisSocketAction === "attack") {
+        switch (otherSocketAction) {
+          case "attack":
+            const thisHp = data.hp - otherSocketObject.attack - data.defense + 100
+            const otherHp = otherSocketObject.hp - data.attack - otherSocketObject.defense
+            turns[turn][data.socketId].hp = thisHp
+            turns[turn][otherSocketId].hp = otherHp
+
+            break;
+
+          default:
+            break;
+        }
+      } else if (thisSocketAction === "defend") {
+
+      }
+
+
+      io.emit("turnFinished", turns)
+    } else {
+      turn += 1
+      turns[turn] = { [data.socketId]: { action: data.action, attack: data.attack, defense: data.defense, hp: data.hp } }
+    }
+  })
 });
 
 app.use(cors());
