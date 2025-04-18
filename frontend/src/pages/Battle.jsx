@@ -12,10 +12,10 @@ export const Battle = () => {
   const [monsterTwo, setMonsterTwo] = useState({});
 
   useEffect(() => {
+    socket.emit("userOnRoom");
     socket.on("roomInfo", (data) => {
       if (Object.keys(data).length === 2) {
         setIsTwoPlayers(true);
-        console.log(Object.entries(data));
         const arrayMonsterOne = Object.entries(data).filter(
           ([socketEntry, _]) => {
             return socketEntry === socket.id;
@@ -26,17 +26,12 @@ export const Battle = () => {
             return socketEntry !== socket.id;
           }
         );
-        console.log(arrayMonsterOne[0][1]["monster"]);
 
         setMonsterOne(arrayMonsterOne[0][1]["monster"]);
         setMonsterTwo(arrayMonsterTwo[0][1]["monster"]);
       } else {
         setIsTwoPlayers(false);
       }
-    });
-
-    socket.on("userDisconnected", (data) => {
-      console.log("userDisconnected");
     });
   }, []);
   return (
