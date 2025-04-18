@@ -33,6 +33,37 @@ router
         .json({ message: "fail", detail: "Internal Server Error" });
     }
   })
+  .delete("/socket/:socket", async (req, res) => {
+    const { socket } = req.params;
+
+    try {
+      const user = await prisma.player.findMany({
+        where: {
+          socket,
+        },
+      });
+
+      if (user.length == 0) {
+        return res.status(404).json({
+          message: "fail",
+          detail: "User not found",
+        });
+      }
+
+      await prisma.player.deleteMany({
+        where: {
+          socket,
+        },
+      });
+
+      return res.status(204).send();
+    } catch (error) {
+      return res.status(500).json({
+        message: "fail",
+        detail: "Internal Server Error",
+      });
+    }
+  })
   .delete("/:id", async (req, res) => {
     const { id } = req.params;
     try {
