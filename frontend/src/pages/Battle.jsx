@@ -30,6 +30,8 @@ export const Battle = () => {
 
         setMonsterOne(arrayMonsterOne[0][1]["monster"]);
         setMonsterTwo(arrayMonsterTwo[0][1]["monster"]);
+      } else {
+        setIsTwoPlayers(false);
       }
     });
 
