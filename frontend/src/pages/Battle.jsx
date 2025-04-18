@@ -34,6 +34,11 @@ export const Battle = () => {
       }
     });
   }, []);
+
+  const actions = (modifiers) => {
+    return { modifiers }
+  }
+
   return (
     <>
       {isTwoPlayers ? (
@@ -44,6 +49,8 @@ export const Battle = () => {
             attack={monsterOne.attack}
             defense={monsterOne.defense}
             speed={monsterOne.speed}
+            actions={actions}
+
           />
           <CardTwo
             name={monsterTwo.name}
