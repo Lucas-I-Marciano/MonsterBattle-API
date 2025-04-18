@@ -5,6 +5,9 @@ import * as yup from "yup";
 import { createPlayer } from "../services/player";
 import { socket } from "../socket";
 import { useReducer } from "react";
+import { joinArena } from "../services/arena";
+import { randomMonster } from "../services/monster";
+import { useNavigate } from "react-router";
 
 const schema = yup
   .object({
@@ -27,6 +30,7 @@ const reducer = (state, action) => {
 };
 
 export const Home = () => {
+  const navigate = useNavigate();
   const {
     register,
     handleSubmit,
@@ -34,9 +38,18 @@ export const Home = () => {
   } = useForm({
     resolver: yupResolver(schema),
   });
-  const onSubmit = ({ name }) => {
+  const onSubmit = async ({ name }) => {
     dispatch({ type: "loading" });
-    createPlayer({ name, socket: socket.id.toString() });
+
+    const socketId = socket.id.toString();
+
+    const player = await createPlayer({ name, socket: socketId });
+
+    const response = await joinArena(player.data.id, 5);
+    const monster = await randomMonster(response["monster_id"]);
+
+    socket.emit("userJoinRoom", { [socketId]: { monster } });
+    navigate("/battle");
   };
 
   const [buttonState, dispatch] = useReducer(reducer, {
