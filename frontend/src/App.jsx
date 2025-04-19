@@ -1,27 +1,15 @@
-import { useEffect, useState } from "react";
-import { socket } from "./socket"
+import { Routes, Route } from "react-router";
+import { Battle } from "./pages/Battle";
+import { Home } from "./pages/Home";
 
 function App() {
-  const [isConnected, setIsConnected] = useState(socket.connected);
-
-  useEffect(() => {
-    const onConnect = () => setIsConnected(true)
-    const onDisconnect = () => setIsConnected(false)
-
-    socket.on("connect", onConnect)
-    socket.on("disconnect", onDisconnect)
-
-  }, [])
   return (
     <>
-      <div className="App flex flex-col">
-      </div>
-      <button onClick={() => {
-        socket.emit("testEvent")
-      }}>testEvent</button>
-
+      <Routes>
+        <Route path="/" element={<Home />} />
+        <Route path="/battle" element={<Battle />} />
+      </Routes>
     </>
-  )
+  );
 }
-
-export default App
+export default App;
