@@ -462,11 +462,24 @@ io.on("connection", (socket) => {
   // --- Handlers de Eventos ---
 
   socket.on("userJoinRoom", async (data) => {
-    // <<< Torna a função async para usar await com Prisma
-    console.log(`userJoinRoom recebido de ${socket.id} com dados:`, data); // Log para ver o que chegou
+    console.log(`userJoinRoom recebido de ${socket.id} com dados:`, data);
 
-    // --- Validação Atualizada ---
-    // Espera apenas: { playerId: number }
+    // --- NOVO: Resetar battleState se necessário ---
+    // Verifica se a sala de espera está vazia (primeiro jogador de uma possível nova partida)
+    // E se existe um battleState de uma partida anterior que já terminou
+    if (
+      Object.keys(roomInfo).length === 0 &&
+      battleState !== null &&
+      battleState.status === "finished"
+    ) {
+      console.log(
+        "[RESET] Estado de batalha anterior ('finished') encontrado. Resetando battleState para null."
+      );
+      battleState = null; // <<< RESETA O ESTADO AQUI!
+    }
+    // --- FIM NOVO ---
+
+    // --- Validação (como antes) ---
     if (!data || typeof data.playerId !== "number") {
       console.error(
         "Dados inválidos para userJoinRoom (esperando apenas playerId):",
@@ -477,17 +490,18 @@ io.on("connection", (socket) => {
       });
       return;
     }
-
-    const { playerId } = data; // Pega o ID do jogador enviado pelo frontend
+    const { playerId } = data;
 
     // --- Verificações de Sala/Batalha (como antes) ---
-    if (battleState && battleState.status !== "finished") {
+    // Agora verifica se a batalha está ATIVA (pois pode ser null novamente)
+    if (battleState && battleState.status === "active") {
       console.log(
         `Tentativa de join recusada para ${socket.id} (playerId: ${playerId}): Batalha ativa.`
       );
       socket.emit("room_full_error", { message: "Batalha já em andamento." });
       return;
     }
+    // Verifica se a sala de espera está cheia
     if (Object.keys(roomInfo).length >= MAX_PLAYERS && !roomInfo[socket.id]) {
       console.log(
         `Sala cheia na tentativa de join por ${socket.id} (playerId: ${playerId})`
@@ -498,23 +512,17 @@ io.on("connection", (socket) => {
       return;
     }
 
-    // --- LÓGICA PARA ATRIBUIR MONSTRO ALEATÓRIO (NOVO) ---
+    // --- Atribuição de Monstro (como antes) ---
     let assignedMonster;
     try {
-      // 1. Busca todos os monstros (ou apenas IDs se preferir)
-      // É mais eficiente buscar todos os dados se não houver muitos monstros
-      const allMonsters = await prisma.monster.findMany({
-        // Você pode selecionar campos específicos se quiser:
-        // select: { id: true, name: true, hp: true, attack: true, defense: true, speed: true, special: true }
-      });
+      const allMonsters = await prisma.monster.findMany();
       if (!allMonsters || allMonsters.length === 0) {
         throw new Error("Nenhum monstro cadastrado no banco de dados.");
       }
-      // 2. Escolhe um índice aleatório
       const randomIndex = Math.floor(Math.random() * allMonsters.length);
-      assignedMonster = allMonsters[randomIndex]; // Pega o objeto completo do monstro
+      assignedMonster = allMonsters[randomIndex];
       console.log(
-        `Monstro aleatório atribuído para ${playerId} (${socket.id}): ${assignedMonster.name} (ID: ${assignedMonster.id})`
+        `Monstro aleatório atribuído para ${playerId} (${socket.id}): ${assignedMonster.name}`
       );
     } catch (error) {
       console.error(
@@ -524,17 +532,15 @@ io.on("connection", (socket) => {
       socket.emit("join_error", {
         message: "Erro interno ao selecionar monstro. Tente novamente.",
       });
-      return; // Impede continuar se não conseguiu monstro
+      return;
     }
-    // --- Fim da Lógica do Monstro ---
 
-    // --- Continua com a lógica de adicionar à sala (agora com o monstro) ---
+    // --- Adiciona à sala (como antes) ---
     const playerData = {
       socketId: socket.id,
       playerId: playerId,
-      monster: assignedMonster, // Usa o monstro que o backend acabou de buscar
+      monster: assignedMonster,
     };
-
     if (!roomInfo[socket.id]) {
       roomInfo[socket.id] = playerData;
       console.log(
@@ -542,40 +548,34 @@ io.on("connection", (socket) => {
           playerData.monster.name
         }. Sala: ${Object.keys(roomInfo).length}/${MAX_PLAYERS}`
       );
-      // Informa ao jogador qual monstro ele recebeu e status da sala
       io.to(socket.id).emit("status_update", {
         message: `Você recebeu ${playerData.monster.name}! Aguardando ${
           MAX_PLAYERS - Object.keys(roomInfo).length
         } jogador(es)...`,
       });
     } else {
-      // Se ele já estava (improvável neste fluxo, mas por segurança)
       console.log(
         `Jogador ${playerData.playerId} (${socket.id}) atualizado com ${playerData.monster.name}.`
       );
       roomInfo[socket.id] = playerData;
     }
 
-    // --- LOGS DE DEPURAÇÃO ADICIONADOS ---
+    // --- Logs de Depuração (como antes) ---
     const currentRoomSize = Object.keys(roomInfo).length;
-    const isBattleStateNull = battleState === null;
+    const isBattleStateNull = battleState === null; // Reavalia aqui após possível reset
     console.log(
       `[ANTES DO IF] Tamanho roomInfo: ${currentRoomSize}. battleState é null? ${isBattleStateNull}`
     );
-    // --- FIM LOGS DE DEPURAÇÃO ---
 
-    // --- Iniciar Batalha (Lógica existente) ---
-    if (Object.keys(roomInfo).length === MAX_PLAYERS && battleState === null) {
+    // --- Iniciar Batalha (como antes) ---
+    // A condição isBattleStateNull agora DEVE ser verdadeira se o reset funcionou
+    if (currentRoomSize === MAX_PLAYERS && isBattleStateNull) {
       console.log(
         "[DENTRO DO IF] Condição atendida! Tentando iniciar batalha..."
       );
-      console.log("Sala cheia! Iniciando batalha...");
       try {
-        // Adiciona try...catch para capturar erros aqui dentro
-        console.log("Sala cheia! Iniciando batalha..."); // Log original
+        console.log("Sala cheia! Iniciando batalha...");
         const playersArray = Object.values(roomInfo);
-
-        // --- LOG DE DEPURAÇÃO ADICIONADO ---
         console.log(
           "[DENTRO DO IF] Dados para inicializar:",
           JSON.stringify(
@@ -586,26 +586,19 @@ io.on("connection", (socket) => {
             null,
             2
           )
-        ); // Log mais conciso
-        // --- FIM LOG DE DEPURAÇÃO ---
-
+        );
         initializeBattleState(playersArray[0], playersArray[1]);
 
-        // --- LOG DE DEPURAÇÃO ADICIONADO ---
         if (!battleState) {
-          // Verifica se initializeBattleState funcionou
           console.error(
-            "[ERRO DENTRO DO IF] initializeBattleState não criou battleState!"
+            "[ERRO CRÍTICO] initializeBattleState não criou battleState!"
           );
-          // O que fazer aqui? Talvez emitir um erro? Por enquanto, impede continuar.
           return;
         }
         console.log(
           "[DENTRO DO IF] battleState criado. Status inicial:",
           battleState.status
         );
-        // --- FIM LOG DE DEPURAÇÃO ---
-
         battleState.status = "active";
         battleState.turnPhase = "waiting_for_actions";
 
@@ -617,37 +610,31 @@ io.on("connection", (socket) => {
           io.to(p.socketId).emit("battle_start", {
             message: "A batalha começou!",
             yourPlayerId: p.socketId,
-            initialState: { ...battleState }, // Envia cópia
+            initialState: { ...battleState },
           });
         });
-
-        roomInfo = {}; // Limpa sala de espera
+        roomInfo = {};
         console.log(
           "Batalha iniciada, esperando ações para o turno:",
           battleState.currentTurn
-        ); // Log original
+        );
       } catch (error) {
         console.error("!!! ERRO CRÍTICO AO INICIAR BATALHA !!!", error);
-        // Reseta o estado para tentar permitir nova tentativa?
-        battleState = null;
-        // Notificar os jogadores?
-        const playerSockets = Object.keys(roomInfo); // Pega os sockets que estavam na sala
+        battleState = null; // Garante reset em caso de erro na inicialização
+        const playerSockets = Object.keys(roomInfo);
         playerSockets.forEach((sockId) => {
           io.to(sockId).emit("join_error", {
-            message:
-              "Erro interno do servidor ao iniciar a batalha. Tente novamente.",
+            message: "Erro interno do servidor ao iniciar a batalha.",
           });
         });
-        roomInfo = {}; // Limpa roomInfo também
+        roomInfo = {};
       }
     } else {
-      // --- LOG DE DEPURAÇÃO ADICIONADO ---
       console.log(
         `[FORA DO IF] Condição NÃO atendida. Tamanho: ${currentRoomSize}, battleState null? ${isBattleStateNull}`
       );
-      // --- FIM LOG DE DEPURAÇÃO ---
     }
-  }); // Fim do handler userJoinRoom
+  }); // Fim userJoinRoom
 
   // Handler para receber a ação do jogador
   socket.on("userAction", (data) => {
