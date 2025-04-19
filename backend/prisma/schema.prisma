@@ -3,8 +3,8 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
-  url      = "file:./monster.db"
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
 model Player {
